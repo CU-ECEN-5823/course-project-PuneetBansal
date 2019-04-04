@@ -113,7 +113,7 @@ appPlugin: slot-manager=false
     "PID": "0xf0b0",
     "VID": "0x1234",
     "CRPL": "0x0020",
-    "Features": "0x000f",
+    "Features": "0x000b",
     "Elements": [
       \{
         "Name": "Primary Element",
@@ -121,12 +121,12 @@ appPlugin: slot-manager=false
         "NumS": "3",
         "NumV": "0",
         "SIG Models": [
-          "1001",
-          "Generic OnOff Client",
           "0",
           "Configuration Server",
           "1000",
-          "Generic OnOff Server"]
+          "Generic OnOff Server",
+          "1001",
+          "Generic OnOff Client"]
         ,
         "Vendor Models": [
           ]

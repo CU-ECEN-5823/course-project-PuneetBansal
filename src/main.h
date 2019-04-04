@@ -2,6 +2,8 @@
  * @description	: contains header files and #defines for the project.
  * @author 		: Puneet Bansal
  * @reference	: Silicon Labs SDK -https://siliconlabs.github.io/Gecko_SDK_Doc/efr32bg13/html/index.html
+ * 				: Bluetooth Mesh SDK- https://www.silabs.com/documents/login/reference-manuals/bluetooth-le-and-mesh-software-api-reference-manual.pdf
+ *				: SOC Bluetooth Mesh Light, SOC Bluetooth Mesh Switch example code.
  */
 
 #include <stdint.h>
