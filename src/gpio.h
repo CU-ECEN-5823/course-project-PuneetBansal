@@ -14,4 +14,12 @@ void gpioLed0SetOn();
 void gpioLed0SetOff();
 void gpioLed1SetOn();
 void gpioLed1SetOff();
+void gpioEnableDisplay();
+void gpioSetDisplayExtcomin(bool high);
+void gpioCallback1();
+
 #endif /* SRC_GPIO_H_ */
+
+#define GPIO_SET_DISPLAY_EXT_COMIN_IMPLEMENTED 	1
+#define GPIO_DISPLAY_SUPPORT_IMPLEMENTED		1
+

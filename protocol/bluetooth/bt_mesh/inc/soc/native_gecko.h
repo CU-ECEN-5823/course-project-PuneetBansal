@@ -10601,7 +10601,7 @@ static inline struct gecko_msg_hardware_set_lazy_soft_timer_rsp_t* gecko_cmd_har
 *
 **/
 
-static inline struct gecko_msg_flash_ps_erase_all_rsp_t* gecko_cmd_flash_ps_erase_all()
+static inline  gecko_cmd_flash_ps_erase_all()
 {
     struct gecko_cmd_packet *gecko_cmd_msg = (struct gecko_cmd_packet *)gecko_cmd_msg_buf;
     struct gecko_cmd_packet *gecko_rsp_msg = (struct gecko_cmd_packet *)gecko_rsp_msg_buf;

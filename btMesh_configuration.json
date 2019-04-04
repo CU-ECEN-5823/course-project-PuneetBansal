@@ -5,7 +5,7 @@
     "PID": "0xf0b0",
     "VID": "0x1234",
     "CRPL": "0x0020",
-    "Features": "0x000b",
+    "Features": "0x000f",
     "Elements": [
       {
         "Name": "Primary Element",
@@ -13,11 +13,11 @@
         "NumS": "3",
         "NumV": "0",
         "SIG Models": [
-          "0x0000",
-          "Configuration Server",
-          "0x1001",
+          "1001",
           "Generic OnOff Client",
-          "0x1000",
+          "0",
+          "Configuration Server",
+          "1000",
           "Generic OnOff Server"]
         ,
         "Vendor Models": [

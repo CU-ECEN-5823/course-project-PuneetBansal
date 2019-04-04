@@ -36,6 +36,10 @@
 #include "em_cmu.h"
 #include <em_gpio.h>
 
+#include "src/main.h"
+#include "src/log.h"
+
+
 /* Device initialization header */
 #include "hal-config.h"
 
@@ -45,6 +49,13 @@
 #include "bspconfig.h"
 #endif
 #include "src/ble_mesh_device_type.h"
+#include <stdlib.h>
+#include "mesh_generic_model_capi_types.h"
+#include "mesh_lib.h"
+
+
+#define buttonPort gpioPortF
+#define buttonPin 6
 
 /***********************************************************************************************//**
  * @addtogroup Application
@@ -102,13 +113,53 @@ const gecko_configuration_t config =
   .max_timers = 16,
 };
 
+//#include "src/log.h"
+
+#include "src/display.h"
+
 void handle_gecko_event(uint32_t evt_id, struct gecko_cmd_packet *evt);
 void mesh_native_bgapi_init(void);
 bool mesh_bgapi_listener(struct gecko_cmd_packet *evt);
 
+uint16_t element_index = 0;
+uint8_t transaction_id = 0;
+
+static void onoff_request(uint16_t model_id,
+                          uint16_t element_index,
+                          uint16_t client_addr,
+                          uint16_t server_addr,
+                          uint16_t appkey_index,
+                          const struct mesh_generic_request *request,
+                          uint32_t transition_ms,
+                          uint16_t delay_ms,
+                          uint8_t request_flags)
+{
+	LOG_INFO("Entered onff request");
+
+	if(request->on_off == MESH_GENERIC_ON_OFF_STATE_ON)
+	{
+	displayPrintf(DISPLAY_ROW_TEMPVALUE,"%s","Button Pressed");
+	}
+	else
+	{
+	displayPrintf(DISPLAY_ROW_TEMPVALUE,"%s","Button Released");
+	}
+
+}
+static void onoff_change(uint16_t model_id,
+                         uint16_t element_index,
+                         const struct mesh_generic_state *current,
+                         const struct mesh_generic_state *target,
+                         uint32_t remaining_ms)
+{
+	LOG_INFO("Entered on_off change");
+}
+
+
 /**
  * See light switch app.c file definition
  */
+
 void gecko_bgapi_classes_init_server_friend(void)
 {
 	gecko_bgapi_class_dfu_init();
@@ -195,41 +246,232 @@ void gecko_main_init()
 
 }
 
+struct gecko_msg_system_get_bt_address_rsp_t* bluetoothAdd;
 void handle_gecko_event(uint32_t evt_id, struct gecko_cmd_packet *evt)
 {
-  switch (evt_id) {
-    case gecko_evt_system_boot_id:
-      // Initialize Mesh stack in Node operation mode, wait for initialized event
-      gecko_cmd_mesh_node_init();
-      break;
-    case gecko_evt_mesh_node_initialized_id:
-      if (!evt->data.evt_mesh_node_initialized.provisioned) {
-        // The Node is now initialized, start unprovisioned Beaconing using PB-ADV and PB-GATT Bearers
-        gecko_cmd_mesh_node_start_unprov_beaconing(0x3);
-      }
-      break;
-    case gecko_evt_le_connection_closed_id:
-      /* Check if need to boot to dfu mode */
-      if (boot_to_dfu) {
-        /* Enter to DFU OTA mode */
-        gecko_cmd_system_reset(2);
-      }
-      break;
-    case gecko_evt_gatt_server_user_write_request_id:
-      if (evt->data.evt_gatt_server_user_write_request.characteristic == gattdb_ota_control) {
-        /* Set flag to enter to OTA mode */
-        boot_to_dfu = 1;
-        /* Send response to Write Request */
-        gecko_cmd_gatt_server_send_user_write_response(
-          evt->data.evt_gatt_server_user_write_request.connection,
-          gattdb_ota_control,
-          bg_err_success);
+	uint8_t * meshPublisher;
+	char devName[20];
+	uint16_t ret;
+	uint16_t ret1;
 
-        /* Close connection to enter to DFU OTA mode */
-        gecko_cmd_le_connection_close(evt->data.evt_gatt_server_user_write_request.connection);
+	switch (evt_id)
+	{
+
+	case gecko_evt_system_boot_id:
+		LOG_INFO("entered boot id");
+		//gecko_cmd_flash_ps_erase_all();
+
+#if DEVICE_USES_BLE_MESH_CLIENT_MODEL
+		displayPrintf(DISPLAY_ROW_NAME,"Publisher");
+#endif
+
+#if DEVICE_USES_BLE_MESH_SERVER_MODEL
+		displayPrintf(DISPLAY_ROW_NAME,"Subscriber");
+#endif
+
+bluetoothAdd=gecko_cmd_system_get_bt_address();
+meshPublisher=(uint8_t *)&bluetoothAdd->address;
+
+		/*Setting the name of the device*/
+#if DEVICE_USES_BLE_MESH_CLIENT_MODEL
+		sprintf(devName, "5823Pub %02x%02x", meshPublisher[1], meshPublisher[0]);
+#endif
+
+#if DEVICE_USES_BLE_MESH_SERVER_MODEL
+		sprintf(devName, "5823Sub %02x%02x", meshPublisher[1], meshPublisher[0]);
+#endif
+
+		LOG_INFO("Device name is %s",devName);
+		displayPrintf(DISPLAY_ROW_BTADDR,devName);
+
+
+
+		ret=gecko_cmd_gatt_server_write_attribute_value(gattdb_device_name, 0, strlen(devName), (uint8 *)devName)->result;
+		if (ret)
+		{
+			LOG_INFO("gecko_cmd_gatt_server_write_attribute_value() failed, code %x\r\n", ret);
+		}
+
+		struct gecko_msg_flash_ps_erase_all_rsp_t *rsp;
+
+		if(GPIO_PinInGet(buttonPort,buttonPin)==0)
+		{
+			LOG_INFO("Initiating factory reset");
+			displayPrintf(DISPLAY_ROW_ACTION,"Factory Reset");
+			rsp=gecko_cmd_flash_ps_erase_all();
+			LOG_INFO("Return value of erase all is %d",rsp->result);
+			gecko_cmd_hardware_set_soft_timer(2*32768,timerHandle,1);
+		}
+
+		else
+		{
+			/*Obtaining the bluetooth address and printing it on the LCD*/
+
+			// Initialize Mesh stack in Node operation mode, wait for initialized event
+			int ret1=gecko_cmd_mesh_node_init()->result;
+			if(ret1)
+			{
+				LOG_INFO("gecko_cmd_mesh_node_init() failed, code %x\r\n", ret1);
+			}
+		}
+		break;
+
+
+    case gecko_evt_hardware_soft_timer_id:
+      if(evt->data.evt_hardware_soft_timer.handle==timerHandle)
+      {
+          // reset the device to finish factory reset
+          LOG_INFO("Just Before rest");
+    	  gecko_cmd_system_reset(0);
       }
       break;
-    default:
-      break;
+
+	case gecko_evt_mesh_node_initialized_id:
+
+		LOG_INFO("Mesh node initialized");
+		LOG_INFO("Now calling generic client init");
+
+		struct gecko_msg_mesh_node_initialized_evt_t *pData = (struct gecko_msg_mesh_node_initialized_evt_t *)&(evt->data);
+
+		/*Check if the device is provisioned or not. If it is not provisioned, then start the beaconing process.
+		 *Otherwise, do the mesh lib init.*/
+
+
+		if(pData->provisioned)
+		{
+			LOG_INFO("Node is provisioned, calling mesh lib init");
+			displayPrintf(DISPLAY_ROW_ACTION,"Provisioned");
+			//gecko_cmd_mesh_generic_client_init();
+
+			#if DEVICE_USES_BLE_MESH_CLIENT_MODEL
+			gecko_cmd_mesh_generic_client_init();
+			GPIOINT_Init();
+			GPIOINT_CallbackRegister(6, gpioCallback1);
+			mesh_lib_init(malloc,free,8); // Initializing the mesh library with 8 model support.
+
+			#endif
+
+			#if DEVICE_USES_BLE_MESH_SERVER_MODEL
+			gecko_cmd_mesh_generic_server_init();
+			mesh_lib_init(malloc,free,9); // Initializing the mesh library with 8 model support.
+			mesh_lib_generic_server_register_handler(MESH_GENERIC_ON_OFF_CLIENT_MODEL_ID,0,onoff_request,onoff_change);
+			mesh_lib_generic_server_publish(MESH_GENERIC_ON_OFF_SERVER_MODEL_ID,0,mesh_generic_state_on_off);
+			#endif
+		}
+		else
+				{
+					LOG_INFO("Node is unprovisioned");
+					displayPrintf(DISPLAY_ROW_CONNECTION,"Unprovisioned");
+					// The Node is now initialized, start unprovisioned Beaconing using PB-ADV and PB-GATT Bearers
+					LOG_INFO("calling beaconing");
+					gecko_cmd_mesh_node_start_unprov_beaconing(0x3);
+					//LOG_INFO("after beaconing");
+				}
+		break;
+
+
+	case gecko_evt_mesh_node_provisioning_started_id:
+
+		displayPrintf(DISPLAY_ROW_CONNECTION,"Provisioning");
+		LOG_INFO("Provisioning Started");
+		break;
+
+	case gecko_evt_mesh_node_provisioned_id:
+		displayPrintf(DISPLAY_ROW_CONNECTION,"Provisioned");
+		LOG_INFO("Provisioning Completed");
+
+		break;
+
+	case gecko_evt_mesh_node_provisioning_failed_id:
+
+		displayPrintf(DISPLAY_ROW_CONNECTION,"Provision Fail");
+		struct gecko_msg_mesh_node_provisioning_failed_evt_t *res=(struct gecko_msg_mesh_node_provisioning_failed_evt_t *)&(evt->data);;
+		LOG_INFO("Provision Fail %x",res->result);
+		break;
+
+	case gecko_evt_mesh_node_key_added_id:
+	      LOG_INFO("got new %s key with index %x\r\n", evt->data.evt_mesh_node_key_added.type == 0 ? "network" : "application",
+	             evt->data.evt_mesh_node_key_added.index);
+	      break;
+
+	    case gecko_evt_mesh_node_model_config_changed_id:
+	      LOG_INFO("model config changed\r\n");
+	      break;
+
+	    case gecko_evt_le_connection_opened_id:
+	      LOG_INFO("evt:gecko_evt_le_connection_opened_id\r\n");
+	      //num_connections++;
+	      //conn_handle = evt->data.evt_le_connection_opened.connection;
+	      displayPrintf(DISPLAY_ROW_ACTION,"connected");
+	      // turn off lpn feature after GATT connection is opened
+	      //gecko_cmd_mesh_lpn_deinit();
+	      //DI_Print("LPN off", DI_ROW_LPN);
+	      break;
+
+
+	case gecko_evt_le_connection_closed_id:
+		/* Check if need to boot to dfu mode */
+		//displayPrintf(DISPLAY_ROW_CONNECTION,"");
+
+		if (boot_to_dfu) {
+			/* Enter to DFU OTA mode */
+			gecko_cmd_system_reset(2);
+		}
+		break;
+
+	case gecko_evt_system_external_signal_id:
+		LOG_INFO("Entered External Signal Id");
+		struct mesh_generic_request req;
+		uint16 resp;
+		req.kind= mesh_generic_request_on_off;
+
+
+		if (evt->data.evt_system_external_signal.extsignals & bt_risingEdgeInt)
+		{
+			bt_event &= ~bt_risingEdgeInt;
+			LOG_INFO("Rising Edge Interrupt Received");
+			req.on_off=MESH_GENERIC_ON_OFF_STATE_ON;
+			resp = mesh_lib_generic_client_publish(
+					MESH_GENERIC_ON_OFF_CLIENT_MODEL_ID,
+					element_index,
+					transaction_id,
+					&req,
+					0,     // transition
+					0,
+					0     // flags
+					);
+					transaction_id++;
+					if (resp) {
+						printf("gecko_cmd_mesh_generic_client_publish failed,code %x\r\n", resp);
+					} else {
+						printf("request sent, trid = %u, delay = %d\r\n", transaction_id, 0);
+					}
+
+
+		}
+		if (evt->data.evt_system_external_signal.extsignals & bt_fallingEdgeInt)
+		{
+			bt_event &= ~bt_fallingEdgeInt;
+			LOG_INFO("Falling Edge Interrupt Received");
+			req.on_off=MESH_GENERIC_ON_OFF_STATE_OFF;
+			resp = mesh_lib_generic_client_publish(
+					MESH_GENERIC_ON_OFF_CLIENT_MODEL_ID,
+					element_index,
+					transaction_id,
+					&req,
+					0,     // transition
+					0,
+					0     // flags
+					);
+					transaction_id++;
+					if (resp) {
+						printf("gecko_cmd_mesh_generic_client_publish failed,code %x\r\n", resp);
+					} else {
+						printf("request sent, trid = %u, delay = %d\r\n", transaction_id, 0);
+					}
+		}
+	break;
+	default:
+		break;
   }
 }
