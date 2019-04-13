@@ -452,11 +452,11 @@ void handle_gecko_event(uint32_t evt_id, struct gecko_cmd_packet *evt)
 		displayPrintf(DISPLAY_ROW_CONNECTION,"Provisioned");
 		LOG_INFO("Provisioning Completed");
 		int err2;
-		err2=mesh_lib_init(malloc,free,8); // Initializing the mesh library with 8 model support.
-		LOG_INFO("Err in client mesh lib init is %d",err2);
+		//err2=mesh_lib_init(malloc,free,8); // Initializing the mesh library with 8 model support.
+		//LOG_INFO("Err in client mesh lib init is %d",err2);
 
 		//gecko_cmd_hardware_set_soft_timer(10*32768,frienshipFailedHandle,1);
-		lpn_init();
+		//lpn_init();
 
 		//GPIOINT_Init();
 		//GPIO_ExtIntConfig(BSP_BUTTON0_PORT, BSP_BUTTON0_PIN, BSP_BUTTON0_PIN, true, true, true);
