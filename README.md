@@ -18,3 +18,7 @@ Project Update: 13th April 2019
 ->I have used my assignment 10 submission as the base. On that I have added the basic functionality to intialise the low power node and establish friendship. 
 API's added: gecko_cmd_mesh_lpn_init() , gecko_cmd_mesh_lpn_configure(2, 5*1000) , gecko_cmd_mesh_lpn_establish_friendship(0). 
 Before calling these I have called the gecko_bgapi_classes_init_client_lpn in main() for initialisation.
+
+Google Drive Links: 
+-> Group folder: https://drive.google.com/drive/u/1/folders/19pP2BnPFkOunKWceiNoMzz06ycwfbmVY
+-> Puneet's Folder : https://drive.google.com/drive/u/1/folders/1kCcFiodJQJ5zUSyfy8F3fvhO_kHt09sV
