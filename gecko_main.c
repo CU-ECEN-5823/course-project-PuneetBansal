@@ -63,6 +63,7 @@
 #include <stdlib.h>
 #include "mesh_generic_model_capi_types.h"
 #include "mesh_lib.h"
+#include "gpiointerrupt.h"
 
 
 #define buttonPort gpioPortF
@@ -195,8 +196,8 @@ void gecko_bgapi_classes_init_server_friend(void)
 	//gecko_bgapi_class_mesh_health_client_init();
 	//gecko_bgapi_class_mesh_health_server_init();
 	//gecko_bgapi_class_mesh_test_init();
-	gecko_bgapi_class_mesh_lpn_init();
-	//gecko_bgapi_class_mesh_friend_init();
+	//gecko_bgapi_class_mesh_lpn_init();
+	gecko_bgapi_class_mesh_friend_init();
 }
 
 
@@ -231,6 +232,45 @@ void gecko_bgapi_classes_init_client_lpn(void)
 	//gecko_bgapi_class_mesh_friend_init();
 
 }
+void lpn_init(void)
+{
+	uint16 res;
+	// Initialize LPN functionality.
+	res = gecko_cmd_mesh_lpn_init()->result;
+	if (res) {
+		LOG_INFO("LPN init failed (0x%x)\r\n", res);
+		return;
+	}
+	else
+	{
+		LOG_INFO("lpn init successfull");
+	}
+
+	// Configure the lpn with following parameters:
+	// - Minimum friend queue length = 2
+	// - Poll timeout = 5 seconds
+	res = gecko_cmd_mesh_lpn_configure(2, 5*1000)->result;
+	if (res) {
+		LOG_INFO("LPN conf failed (0x%x)\r\n", res);
+		return;
+	}
+	else
+	{
+		LOG_INFO("lpn conf successfull");
+	}
+
+	LOG_INFO("trying to find friend...\r\n");
+	res = gecko_cmd_mesh_lpn_establish_friendship(0)->result;
+
+	if (res != 0) {
+		LOG_INFO("ret.code %x\r\n", res);
+	}
+	else
+	{
+		LOG_INFO("lpn friendship establish successfull");
+	}
+}
+
 void gecko_main_init()
 {
 	// Initialize device
@@ -323,11 +363,22 @@ void handle_gecko_event(uint32_t evt_id, struct gecko_cmd_packet *evt)
 
 
 	case gecko_evt_hardware_soft_timer_id:
+		LOG_INFO("");
+		int res5;
 		if(evt->data.evt_hardware_soft_timer.handle==timerHandle)
 		{
 			// reset the device to finish factory reset
 			LOG_INFO("Just Before reset");
 			gecko_cmd_system_reset(0);
+		}
+
+		if(evt->data.evt_hardware_soft_timer.handle==frienshipFailedHandle)
+		{
+			res5 = gecko_cmd_mesh_lpn_establish_friendship(0)->result;
+
+			if (res5 != 0) {
+				LOG_INFO("ret.code %x\r\n", res5);
+			}
 		}
 		break;
 
@@ -340,7 +391,7 @@ void handle_gecko_event(uint32_t evt_id, struct gecko_cmd_packet *evt)
 		/*Check if the device is provisioned or not. If it is not provisioned, then start the beaconing process.
 		 *Otherwise, do the mesh lib init.*/
 		errorcode_t err,err1,err2;
-
+		//gecko_cmd_mesh_generic_client_init();
 		if(pData->provisioned)
 		{
 			LOG_INFO("Node is provisioned, calling mesh lib init");
@@ -349,18 +400,29 @@ void handle_gecko_event(uint32_t evt_id, struct gecko_cmd_packet *evt)
 
 #if DEVICE_USES_BLE_MESH_CLIENT_MODEL
 			gecko_cmd_mesh_generic_client_init();
-			GPIOINT_Init();
-			GPIOINT_CallbackRegister(6, gpioCallback1);
+			//GPIOINT_Init();
+			//GPIO_ExtIntConfig(BSP_BUTTON0_PORT, BSP_BUTTON0_PIN, BSP_BUTTON0_PIN, true, true, true);
+			//GPIOINT_CallbackRegister(6, gpioCallback1);
 			err2=mesh_lib_init(malloc,free,8); // Initializing the mesh library with 8 model support.
 			LOG_INFO("Err in client mesh lib init is %d",err2);
+
+			//gecko_cmd_hardware_set_soft_timer(10*32768,frienshipFailedHandle,1);
+		    lpn_init();
 
 #endif
 
 #if DEVICE_USES_BLE_MESH_SERVER_MODEL
+
 			LOG_INFO("Calling server init");
+			int res5;
 			gecko_cmd_mesh_generic_server_init();
 			err2=mesh_lib_init(malloc,free,9); // Initializing the mesh library with 8 model support.
 			LOG_INFO("Err in server mesh lib init is %d",err2);
+			res5 = gecko_cmd_mesh_friend_init()->result;
+			if (res5) {
+				LOG_INFO("Friend init failed 0x%x\r\n", res5);
+			}
+
 			err1=mesh_lib_generic_server_register_handler(MESH_GENERIC_ON_OFF_SERVER_MODEL_ID,0,onoff_request,onoff_change);
 			LOG_INFO("Err in server register is %d",err1);
 			err=mesh_lib_generic_server_publish(MESH_GENERIC_ON_OFF_SERVER_MODEL_ID,0,mesh_generic_state_on_off);
@@ -386,16 +448,37 @@ void handle_gecko_event(uint32_t evt_id, struct gecko_cmd_packet *evt)
 		break;
 
 	case gecko_evt_mesh_node_provisioned_id:
+	{
 		displayPrintf(DISPLAY_ROW_CONNECTION,"Provisioned");
 		LOG_INFO("Provisioning Completed");
+		int err2;
+		err2=mesh_lib_init(malloc,free,8); // Initializing the mesh library with 8 model support.
+		LOG_INFO("Err in client mesh lib init is %d",err2);
+
+		//gecko_cmd_hardware_set_soft_timer(10*32768,frienshipFailedHandle,1);
+		lpn_init();
+
+		//GPIOINT_Init();
+		//GPIO_ExtIntConfig(BSP_BUTTON0_PORT, BSP_BUTTON0_PIN, BSP_BUTTON0_PIN, true, true, true);
+		//GPIOINT_CallbackRegister(6, gpioCallback1);
+
+
 
 		break;
+	}
 
 	case gecko_evt_mesh_node_provisioning_failed_id:
 
 		displayPrintf(DISPLAY_ROW_CONNECTION,"Provision Fail");
 		struct gecko_msg_mesh_node_provisioning_failed_evt_t *res=(struct gecko_msg_mesh_node_provisioning_failed_evt_t *)&(evt->data);;
 		LOG_INFO("Provision Fail %x",res->result);
+		LOG_INFO("Node is unprovisioned");
+		struct gecko_msg_mesh_node_start_unprov_beaconing_rsp_t* beaconingResp;
+		displayPrintf(DISPLAY_ROW_CONNECTION,"Unprovisioned");
+		LOG_INFO("calling beaconing");
+		// The Node is now initialized, start unprovisioned Beaconing using PB-ADV and PB-GATT Bearers
+		beaconingResp=gecko_cmd_mesh_node_start_unprov_beaconing(0x3);
+		LOG_INFO("Beaconing response result is %d",beaconingResp->result);
 		break;
 
 	case gecko_evt_mesh_node_key_added_id:
@@ -410,6 +493,8 @@ void handle_gecko_event(uint32_t evt_id, struct gecko_cmd_packet *evt)
 	case gecko_evt_le_connection_opened_id:
 		LOG_INFO("evt:gecko_evt_le_connection_opened_id\r\n");
 		displayPrintf(DISPLAY_ROW_ACTION,"connected");
+		gecko_cmd_mesh_lpn_deinit();
+		displayPrintf(4,"LPN off");
 		break;
 
 	case gecko_evt_mesh_generic_server_client_request_id:
@@ -417,6 +502,11 @@ void handle_gecko_event(uint32_t evt_id, struct gecko_cmd_packet *evt)
 		// pass the server client request event to mesh lib handler that will invoke
 		// the callback functions registered by application
 		mesh_lib_generic_server_event_handler(evt);
+		break;
+
+	case gecko_evt_le_gap_adv_timeout_id:
+		LOG_INFO("entered adv_timeout\n");
+		// these events silently discarded
 		break;
 
 	case gecko_evt_mesh_generic_server_state_changed_id:
@@ -433,14 +523,74 @@ void handle_gecko_event(uint32_t evt_id, struct gecko_cmd_packet *evt)
 			/* Enter to DFU OTA mode */
 			gecko_cmd_system_reset(2);
 		}
+		LOG_INFO("evt:conn closed, reason 0x%x\r\n", evt->data.evt_le_connection_closed.reason);
 		break;
 
-	case gecko_evt_system_external_signal_id:
+	case gecko_evt_mesh_lpn_friendship_established_id:
+		LOG_INFO("Friendship established");
+		displayPrintf(4,"LPN");
+		break;
+
+	case gecko_evt_mesh_lpn_friendship_failed_id:
+		LOG_INFO("lpn_Friendship failed");
+		displayPrintf(4,"NO FRIEND");
+		LOG_INFO("%d",evt->data.evt_mesh_lpn_friendship_failed.reason);
+		gecko_cmd_hardware_set_soft_timer(2*32768,frienshipFailedHandle,1);
+		break;
+
+
+	case gecko_evt_mesh_lpn_friendship_terminated_id:
+		LOG_INFO("lpn_Friendship terminated");
+		displayPrintf(4,"NO FRIEND");
+		gecko_cmd_hardware_set_soft_timer(2*32768,frienshipFailedHandle,1);
+		break;
+
+	/*case gecko_evt_mesh_friend_friendship_established_id:
+		LOG_INFO("evt gecko_evt_mesh_friend_friendship_established, lpn_address=%x\r\n", evt->data.evt_mesh_friend_friendship_established.lpn_address);
+		displayPrintf(4,"FRIEND");
+		break;
+
+	case gecko_evt_mesh_friend_friendship_terminated_id:
+		printf("evt gecko_evt_mesh_friend_friendship_terminated, reason=%x\r\n", evt->data.evt_mesh_friend_friendship_terminated.reason);
+		displayPrintf(4,"NO LPN");
+		break;*/
+
+	case gecko_evt_gatt_server_user_write_request_id:
+		LOG_INFO("Entered write request id");
+		if (evt->data.evt_gatt_server_user_write_request.characteristic == gattdb_ota_control) {
+			/* Set flag to enter to OTA mode */
+			boot_to_dfu = 1;
+			/* Send response to Write Request */
+			gecko_cmd_gatt_server_send_user_write_response(
+					evt->data.evt_gatt_server_user_write_request.connection,
+					gattdb_ota_control,
+					bg_err_success);
+
+			/* Close connection to enter to DFU OTA mode */
+			gecko_cmd_le_connection_close(evt->data.evt_gatt_server_user_write_request.connection);
+		}
+		break;
+
+	case gecko_evt_le_connection_parameters_id:
+		LOG_INFO("connection params: interval %d, timeout %d\r\n", evt->data.evt_le_connection_parameters.interval,
+				evt->data.evt_le_connection_parameters.timeout
+		);
+		break;
+
+	case gecko_evt_mesh_node_reset_id:
+		printf("evt gecko_evt_mesh_node_reset_id\r\n");
+		//initiate_factory_reset();
+		gecko_cmd_flash_ps_erase_all();
+		// reboot after a small delay
+		gecko_cmd_hardware_set_soft_timer(2 * 32768,timerHandle , 1);
+
+		break;
+
+	/*case gecko_evt_system_external_signal_id:
 		LOG_INFO("Entered External Signal Id");
 		struct mesh_generic_request req;
 		uint16 resp;
 		req.kind= mesh_generic_request_on_off;
-
 		if (evt->data.evt_system_external_signal.extsignals & bt_risingEdgeInt)
 		{
 			bt_event &= ~bt_risingEdgeInt;
@@ -484,7 +634,8 @@ void handle_gecko_event(uint32_t evt_id, struct gecko_cmd_packet *evt)
 			} else {
 				printf("request sent, trid = %u, delay = %d\r\n", transaction_id, 0);
 			}
-		}
+		}*/
+
 		break;
 	default:
 		break;

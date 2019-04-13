@@ -22,6 +22,7 @@ int main(void)
 
 	// Initialize stack
 	gecko_main_init();
+	//gecko_bgapi_classes_init_client_lpn; //to initialse the node as the low power node.
     buttonPress=0;
     buttonDefine=0;
 	clock_init();
@@ -35,6 +36,7 @@ int main(void)
 
 
 	/* Infinite loop */
+
 	while (1) {
 		struct gecko_cmd_packet *evt = gecko_wait_event();
 		displayPrintf(DISPLAY_ROW_ACTION,"");

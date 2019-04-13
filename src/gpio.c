@@ -4,6 +4,7 @@
  *  Created on: Dec 12, 2018
  *      Author: Dan Walkes
  */
+#include "native_gecko.h"
 #include "gpio.h"
 #include "em_gpio.h"
 #include <string.h>
@@ -76,7 +77,7 @@ void gpioSetDisplayExtcomin(bool high)
 	GPIO_PinOutToggle(LCD_PORT,LCD_PIN);
 }
 
-void gpioCallback1()
+void gpioCallback1(uint8_t pin)
 {
 	LOG_INFO("Entered handler");
 	int pinVal;
@@ -96,3 +97,4 @@ void gpioCallback1()
 	}
 	gecko_external_signal(buttonDefine);
 }
+

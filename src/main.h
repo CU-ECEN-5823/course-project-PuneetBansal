@@ -129,6 +129,8 @@ uint8_t client_state;
 
 uint32_t buttonPress;
 #define timerHandle 12
+#define frienshipFailedHandle 10
+
 uint32_t buttonDefine;
 
 

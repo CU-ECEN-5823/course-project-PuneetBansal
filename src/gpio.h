@@ -16,7 +16,7 @@ void gpioLed1SetOn();
 void gpioLed1SetOff();
 void gpioEnableDisplay();
 void gpioSetDisplayExtcomin(bool high);
-void gpioCallback1();
+void gpioCallback1(uint8_t);
 
 #endif /* SRC_GPIO_H_ */
 
