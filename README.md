@@ -12,13 +12,3 @@ Below is an overview of the sequence used to generate this repository:
 * Relevant emlib project files were copied from SiliconLabs\SimplicityStudio\v4\developer\sdks\gecko_sdk_suite\v2.5\platform as needed and added into the respective directories at the root.
 * The main.c file in the root folder was renamed [gecko_main.c](gecko_main.c).  Contents of the main while loop were moved into functions and the main() function was #ifdef'd out.
 * The [src](src) subfolder was added to contain code specific to the ECEN 5823 course and source files were added to support ECEN 5823 and the simplicity studio exercise assignment.
-
-
-Project Update: 13th April 2019
-->I have used my assignment 10 submission as the base. On that I have added the basic functionality to intialise the low power node and establish friendship. 
-API's added: gecko_cmd_mesh_lpn_init() , gecko_cmd_mesh_lpn_configure(2, 5*1000) , gecko_cmd_mesh_lpn_establish_friendship(0). 
-Before calling these I have called the gecko_bgapi_classes_init_client_lpn in main() for initialisation.
-
-Google Drive Links: 
--> Group folder: https://drive.google.com/drive/u/1/folders/19pP2BnPFkOunKWceiNoMzz06ycwfbmVY
--> Puneet's Folder : https://drive.google.com/drive/u/1/folders/1kCcFiodJQJ5zUSyfy8F3fvhO_kHt09sV

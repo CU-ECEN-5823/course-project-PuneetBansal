@@ -9,6 +9,7 @@
 #include "log.h"
 #include <stdbool.h>
 #include "main.h"
+#include "letimer.h"
 
 #if INCLUDE_LOGGING
 /**
@@ -17,7 +18,6 @@
  */
 uint32_t loggerGetTimestamp(void)
 {
-	//return timerGetRunTimeMilliseconds();
 	uint32_t current_ticks,max_tick;
 	uint32_t ms_time=0;
 	max_tick=LETIMER_CompareGet(LETIMER0,0);
@@ -25,7 +25,6 @@ uint32_t loggerGetTimestamp(void)
 	ms_time=((max_tick-current_ticks)*1000)/freq;
 	ms_time+=(overflow_count* LED_PERIOD*1000);
 	return ms_time;
-
 }
 
 /**

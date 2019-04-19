@@ -118,13 +118,19 @@ appPlugin: slot-manager=false
       \{
         "Name": "Primary Element",
         "Loc": "0x0000",
-        "NumS": "2",
+        "NumS": "5",
         "NumV": "0",
         "SIG Models": [
-          "0",
-          "Configuration Server",
           "1001",
-          "Generic OnOff Client"]
+          "Generic OnOff Client",
+          "1000",
+          "Generic OnOff Server",
+          "1003",
+          "Generic Level Client",
+          "1302",
+          "Light Lightness Client",
+          "0",
+          "Configuration Server"]
         ,
         "Vendor Models": [
           ]
@@ -132,7 +138,7 @@ appPlugin: slot-manager=false
   \},
   "Memory configuration": \{
     "MAX_ELEMENTS": "1",
-    "MAX_MODELS": "2",
+    "MAX_MODELS": "5",
     "MAX_APP_BINDS": "4",
     "MAX_SUBSCRIPTIONS": "4",
     "MAX_NETKEYS": "4",

@@ -8,7 +8,7 @@
 
 #include <stdint.h>
 #include "cmu.h"
-//#include "letimer.h"
+#include "letimer.h"
 //#include "i2c.h"
 #include <stdlib.h>
 #include <stdbool.h>
@@ -129,7 +129,6 @@ uint8_t client_state;
 
 uint32_t buttonPress;
 #define timerHandle 12
-#define LcdHandler 8
 #define frienshipFailedHandle 10
 
 uint32_t buttonDefine;
