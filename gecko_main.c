@@ -164,10 +164,7 @@ void lpn_init(void)
   // - Poll timeout = 5 seconds
 
   BTSTACK_CHECK_RESPONSE(gecko_cmd_mesh_lpn_configure(2, 5 * 1000));
-
   LOG_INFO("trying to find friend...\r\n");
-  //res = gecko_cmd_mesh_lpn_establish_friendship(0)->result;
-
   BTSTACK_CHECK_RESPONSE(gecko_cmd_mesh_lpn_establish_friendship(0));
 
 }
@@ -199,11 +196,6 @@ void set_device_name(bd_addr *pAddr)
 
   // write device name to the GATT database
   BTSTACK_CHECK_RESPONSE(gecko_cmd_gatt_server_write_attribute_value(gattdb_device_name, 0, strlen(name), (uint8 *)name));
-
-  //res = gecko_cmd_gatt_server_write_attribute_value(gattdb_device_name, 0, strlen(name), (uint8 *)name)->result;
-//  if (res) {
-//    LOG_INFO("gecko_cmd_gatt_server_write_attribute_value() failed, code %x\r\n", res);
-//  }
 
   // show device name on the LCD
   displayPrintf(DISPLAY_ROW_BTADDR,name);
@@ -298,10 +290,7 @@ static void storePersistentData(uint16_t KEY , uint16_t maxVal)
 	uint8_t * val_data;
 	val_data =&maxVal;
 	rsp=gecko_cmd_flash_ps_save(KEY, sizeof(maxVal),val_data)->result;
-	if(rsp)
-	{
-		LOG_INFO("Writing to flash memory failed");
-	}
+	LOG_INFO("%s in store persistent data (returned %d)",rsp==0 ? "Success" : "Error",rsp);
 }
 
 /**
@@ -314,14 +303,9 @@ static uint16_t loadPersistentData(uint16_t KEY)
 {
 	uint16_t data;
 	struct gecko_msg_flash_ps_load_rsp_t* resp;
-	resp=gecko_cmd_flash_ps_load(KEY);
-	if(resp->result)
-	{
-		LOG_INFO("Loading from persistent memory failed");
-	}
+	BTSTACK_CHECK_RESPONSE(gecko_cmd_flash_ps_load(KEY));
 	memcpy(&data,&resp->value.data,resp->value.len);
 	LOG_INFO("Persistent data is %d",data);
-	//displayPrintf(DISPLAY_ROW_TEMPVALUE,"Max value : %d",data);
 	return data;
 }
 
@@ -393,12 +377,9 @@ void handle_gecko_event(uint32_t evt_id, struct gecko_cmd_packet *evt)
 			set_device_name(&pAddr->address);
 
 			// Initialize Mesh stack in Node operation mode, it will generate initialized event
-			result = gecko_cmd_mesh_node_init()->result;/*gecko_cmd_mesh_node_init_oob(0X00,0X03,0X03,0x08,0x00,0x04,0x01)->result;*/
+			BTSTACK_CHECK_RESPONSE(gecko_cmd_mesh_node_init());/*gecko_cmd_mesh_node_init_oob(0X00,0X03,0X03,0x08,0x00,0x04,0x01)->result;*/
 			/*I was trying the out of band authentication and it was not working, so I commented it out for now.*/
 
-			if (result) {
-				LOG_ERROR("init failed (0x%x)", result);
-			}
 		}
 		break;
 
@@ -417,11 +398,7 @@ void handle_gecko_event(uint32_t evt_id, struct gecko_cmd_packet *evt)
 
 		if(evt->data.evt_hardware_soft_timer.handle==frienshipFailedHandle)
 		{
-			res5 = gecko_cmd_mesh_lpn_establish_friendship(0)->result;
-
-			if (res5 != 0) {
-				LOG_INFO("ret.code %x\r\n", res5);
-			}
+			BTSTACK_CHECK_RESPONSE(gecko_cmd_mesh_lpn_establish_friendship(0));
 		}
 		if(evt->data.evt_hardware_soft_timer.handle==sensorReading)
 		{
@@ -440,7 +417,7 @@ void handle_gecko_event(uint32_t evt_id, struct gecko_cmd_packet *evt)
 
 			//GPIO_PinOutClear(SENSOR_ENABLE_PORT,SENSOR_ENABLE_PIN);//Cannot do lpm for humidity since lcd also operates on same pin.
 
-			/*Enabling Load Power Managenemt for the CCS811 sensor. The sensor is active only when the wake pin is low*/
+			/*Enabling Load Power Management for the CCS811 sensor. The sensor is active only when the wake pin is low*/
 			GPIO_PinOutClear(WAKE_PIN_PORT,WAKE_PIN); //Turning on the sensor
 			ppm=ppmGet();
 			sendDataToFriend(ppm);
@@ -473,16 +450,15 @@ void handle_gecko_event(uint32_t evt_id, struct gecko_cmd_packet *evt)
 			displayPrintf(DISPLAY_ROW_CONNECTION,"Provisioned");
 			displayPersistentData();
 
-			gecko_cmd_hardware_set_soft_timer(2 * 32768, sensorReading, 0);
+			BTSTACK_CHECK_RESPONSE(gecko_cmd_hardware_set_soft_timer(2 * 32768, sensorReading, 0));
 		}
 		else
 		{
 			LOG_INFO("node is unprovisioned\r\n");
 			displayPrintf(DISPLAY_ROW_CONNECTION,"unprovisioned");
 			LOG_INFO("starting unprovisioned beaconing...\r\n");
-			gecko_cmd_mesh_node_start_unprov_beaconing(0x3);   // enable ADV and GATT provisioning bearer
+			BTSTACK_CHECK_RESPONSE(gecko_cmd_mesh_node_start_unprov_beaconing(0x3));   // enable ADV and GATT provisioning bearer
 			displayPersistentData();
-
 		}
 		break;
 
@@ -510,7 +486,7 @@ void handle_gecko_event(uint32_t evt_id, struct gecko_cmd_packet *evt)
 		LOG_INFO("provisioning failed, code %x\r\n", evt->data.evt_mesh_node_provisioning_failed.result);
 		displayPrintf(DISPLAY_ROW_CONNECTION,"Provisioning failed");
 		/* start a one-shot timer that will trigger soft reset after small delay */
-		gecko_cmd_hardware_set_soft_timer(2 * 32768, timerHandle, 1);
+		BTSTACK_CHECK_RESPONSE(gecko_cmd_hardware_set_soft_timer(2 * 32768, timerHandle, 1));
 		break;
 
 	case gecko_evt_mesh_node_key_added_id:
@@ -526,7 +502,7 @@ void handle_gecko_event(uint32_t evt_id, struct gecko_cmd_packet *evt)
 		LOG_INFO("evt:gecko_evt_le_connection_opened_id\r\n");
 		num_connections++;
 		conn_handle = evt->data.evt_le_connection_opened.connection;
-		gecko_cmd_mesh_lpn_deinit();
+		BTSTACK_CHECK_RESPONSE(gecko_cmd_mesh_lpn_deinit());
 		displayPrintf(DISPLAY_ROW_CONNECTION,"Connected");
 		break;
 
@@ -599,10 +575,7 @@ void handle_gecko_event(uint32_t evt_id, struct gecko_cmd_packet *evt)
 		displayPrintf(DISPLAY_ROW_CONNECTION,"No Friend");
 		LOG_INFO("%d",evt->data.evt_mesh_lpn_friendship_failed.reason);
 		// try again in 2 seconds
-		result  = gecko_cmd_hardware_set_soft_timer(2*32768, frienshipFailedHandle, 1)->result;
-		if (result) {
-			LOG_INFO("timer failure?!  %x\r\n", result);
-		}
+		BTSTACK_CHECK_RESPONSE(gecko_cmd_hardware_set_soft_timer(2*32768, frienshipFailedHandle,1));
 		break;
 
 	case gecko_evt_mesh_lpn_friendship_terminated_id:
@@ -611,11 +584,9 @@ void handle_gecko_event(uint32_t evt_id, struct gecko_cmd_packet *evt)
 		//DI_Print("friend lost", DI_ROW_LPN);
 		displayPrintf(DISPLAY_ROW_CONNECTION,"Friend Lost");
 		if (num_connections == 0) {
+
 			// try again in 2 seconds
-			result  = gecko_cmd_hardware_set_soft_timer(2*32768, frienshipFailedHandle, 1)->result;
-			if (result) {
-				LOG_INFO("timer failure?!  %x\r\n", result);
-			}
+			BTSTACK_CHECK_RESPONSE(gecko_cmd_hardware_set_soft_timer(2*32768, frienshipFailedHandle, 1));
 		}
 		break;
 
