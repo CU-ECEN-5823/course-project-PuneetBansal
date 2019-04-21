@@ -23,3 +23,5 @@ Below is an overview of the sequence used to generate this repository:
 * Ability to send threshold values using on_off model to the friend node.
 * Addition of persistent data
 
+Project Update 2: https://docs.google.com/document/d/1Y8ieel9D1-T6Oc7vubw92KkgLBFsWoIxKFla6UmDjtw/edit
+Group Update 2: https://docs.google.com/document/d/14hHBsNqZW0f3--COB-lmO9gZ64nn1Kc1kMjcHvZI2IQ/edit
