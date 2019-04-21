@@ -23,6 +23,9 @@
 #define buttonPort gpioPortF
 #define buttonPin 6
 
+//#define WAKE_PIN_PORT gpioPortF
+//#define WAKE_PIN 7
+
 
 void gpioInit()
 {
@@ -44,7 +47,12 @@ void gpioInit()
 
 		GPIO_PinModeSet(buttonPort, buttonPin, gpioModeInputPull, 1);
 		GPIO_ExtIntConfig(buttonPort,buttonPin,buttonPin,true,true,true);
+
+		GPIO_PinModeSet(WAKE_PIN_PORT, WAKE_PIN, gpioModePushPull, false);
+
 		NVIC_EnableIRQ(GPIO_EVEN_IRQn);
+
+
 }
 
 void gpioLed0Toggle()

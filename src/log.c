@@ -23,7 +23,7 @@ uint32_t loggerGetTimestamp(void)
 	max_tick=LETIMER_CompareGet(LETIMER0,0);
 	current_ticks=LETIMER_CounterGet(LETIMER0);
 	ms_time=((max_tick-current_ticks)*1000)/freq;
-	ms_time+=(overflow_count* LED_PERIOD*1000);
+	ms_time+=(overflow_count*1000);
 	return ms_time;
 }
 
