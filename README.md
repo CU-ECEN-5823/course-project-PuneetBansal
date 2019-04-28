@@ -24,5 +24,5 @@ The following has been implemented in the project as of 27th April 2019:
 * Addition of state machines for the sensors
 * All the proposed elements are functional.
 
-FinalReport Puneet : https://drive.google.com/drive/u/1/folders/1kCcFiodJQJ5zUSyfy8F3fvhO_kHt09sV
-Final Group Update : https://drive.google.com/drive/u/1/folders/19pP2BnPFkOunKWceiNoMzz06ycwfbmVY
+* FinalReport Puneet : https://drive.google.com/drive/u/1/folders/1kCcFiodJQJ5zUSyfy8F3fvhO_kHt09sV
+* Final Group Update : https://drive.google.com/drive/u/1/folders/19pP2BnPFkOunKWceiNoMzz06ycwfbmVY
