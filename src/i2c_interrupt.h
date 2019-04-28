@@ -16,9 +16,9 @@ uint16_t humid_value;
 
 void i2c_interrupt_init();
 void i2c_IntBasedRead(uint8_t, uint8_t);
-void i2c_IntBasedWrite(uint8_t, uint8_t, uint8_t);
-void i2c_IntBasedWriteWrite(uint8_t , uint8_t, uint8_t,uint8_t);
-void i2c_IntBasedWriteRead(uint8_t, uint8_t , uint8_t, uint8_t);
+void i2c_IntBasedWrite(uint8_t, uint8_t);
+void i2c_IntBasedWriteWrite(uint8_t ,uint8_t);
+void i2c_IntBasedWriteRead(uint8_t, uint8_t,uint8_t);
 
 #define SCL_PORT gpioPortC
 #define SCL_PIN 10

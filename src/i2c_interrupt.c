@@ -20,8 +20,6 @@ uint8_t DataToSend;
 uint8_t DataToSend1;
 uint8_t Data_Humid;
 
-//uint8_t command_to_write=0xE3;	/*Get temperature, use hold master mode*/
-//uint8_t command_to_write=0xE5;
 /*
  * @decription
  * sets the slave address, flag, command to write to the slave.
@@ -29,7 +27,7 @@ uint8_t Data_Humid;
  *
  */
 
-void i2c_IntBasedWrite(uint8_t SlaveAdd, uint8_t DataToWrite, uint8_t len)
+void i2c_IntBasedWrite(uint8_t SlaveAdd,uint8_t len)
 {
 	initNonPollingI2c.addr= SlaveAdd << 1;
 	initNonPollingI2c.flags= I2C_FLAG_WRITE;
@@ -76,7 +74,7 @@ void i2c_IntBasedRead(uint8_t SlaveAdd, uint8_t len)
 	}
 }
 
-void i2c_IntBasedWriteRead(uint8_t SlaveAdd, uint8_t RegisterAdd, uint8_t writeLen, uint8_t readLen)
+void i2c_IntBasedWriteRead(uint8_t SlaveAdd,uint8_t writeLen, uint8_t readLen)
 {
 	initNonPollingI2c.addr= SlaveAdd << 1;
 	initNonPollingI2c.flags= I2C_FLAG_WRITE_READ;
@@ -101,7 +99,7 @@ void i2c_IntBasedWriteRead(uint8_t SlaveAdd, uint8_t RegisterAdd, uint8_t writeL
 
 }
 
-void i2c_IntBasedWriteWrite(uint8_t SlaveAdd, uint8_t RegisterAdd, uint8_t Data,uint8_t len)
+void i2c_IntBasedWriteWrite(uint8_t SlaveAdd ,uint8_t len)
 {
 	initNonPollingI2c.addr= SlaveAdd << 1;
 	initNonPollingI2c.flags= I2C_FLAG_WRITE_WRITE;
@@ -120,23 +118,14 @@ void i2c_IntBasedWriteWrite(uint8_t SlaveAdd, uint8_t RegisterAdd, uint8_t Data,
 
 }
 
-
-
-
-
-
-
 /*
  * @description
  * I2c interrupt handler. Returns transfer complete on sucessfull completion of transfer and
  * returns an error otherwise.
- *
  */
-
 
 void I2C0_IRQHandler(void)
 {
-	//uint8_t bt_event;
 	CORE_ATOMIC_IRQ_DISABLE();
 	I2C_TransferReturn_TypeDef ret =I2C_Transfer(I2C0);
 
@@ -144,15 +133,11 @@ void I2C0_IRQHandler(void)
 	{
 		if(humidStateActive)
 		{
-			//humidStateActive=0;
 			bt_event |= TRANSFER_COMPLETE_HUMID;
-			//event = transferComplete;
 		}
 		else if (aqiStateActive)
 		{
-			//aqiStateActive=0;
 			bt_event |= TRANSFER_COMPLETE_AQI;
-			//aqi_event= aqi_transferComplete;
 		}
 	}
 
@@ -162,33 +147,17 @@ void I2C0_IRQHandler(void)
 
 		if(humidStateActive)
 		{
-			//humidStateActive=0;
 			bt_event |= TRANSFER_FAIL_HUMID;
-			//event = transferError;
 		}
 		else if (aqiStateActive)
 		{
-			//aqiStateActive=0;
-			//aqi_event= aqi_transferError;
 			bt_event |= TRANSFER_FAIL_AQI;
 		}
 
 	}
 
-
-	/*if(ret == i2cTransferDone)
-	{
-		event = transferComplete;
-	}
-	else if(ret != i2cTransferInProgress)
-	{
-		event = transferError;
-	}*/
-
-
 	gecko_external_signal(bt_event);
 	CORE_ATOMIC_IRQ_ENABLE();
-
 }
 
 

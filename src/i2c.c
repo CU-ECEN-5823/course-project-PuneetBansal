@@ -18,14 +18,6 @@ void i2c_init()
 {
 I2CSPM_Init_TypeDef init1 = I2CSPM_INIT_DEFAULT;
 
-/*init1.sclPin=SCL_PIN;
-init1.sclPort=SCL_PORT;
-init1.sdaPin=SDA_PIN;
-init1.sdaPort=SDA_PORT;
-init1.portLocationScl=12;
-init1.portLocationSda=14;*/
-
-
 I2CSPM_Init(&init1);
 }
 

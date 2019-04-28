@@ -381,9 +381,7 @@ void handle_gecko_event(uint32_t evt_id, struct gecko_cmd_packet *evt)
 			set_device_name(&pAddr->address);
 
 			// Initialize Mesh stack in Node operation mode, it will generate initialized event
-			BTSTACK_CHECK_RESPONSE(gecko_cmd_mesh_node_init());/*gecko_cmd_mesh_node_init_oob(0X00,0X03,0X03,0x08,0x00,0x04,0x01)->result;*/
-			/*I was trying the out of band authentication and it was not working, so I commented it out for now.*/
-
+			BTSTACK_CHECK_RESPONSE(gecko_cmd_mesh_node_init());
 		}
 		break;
 
@@ -409,7 +407,6 @@ void handle_gecko_event(uint32_t evt_id, struct gecko_cmd_packet *evt)
 
 
 #if NON_BLOCKING_IMPLEMENTATION
-			//event = Comp0Underflow;//to remove
 			aqi_event= dataReady;
 			event=takeReading; //to add
 
@@ -430,7 +427,7 @@ void handle_gecko_event(uint32_t evt_id, struct gecko_cmd_packet *evt)
 			//GPIO_PinOutClear(SENSOR_ENABLE_PORT,SENSOR_ENABLE_PIN);//Cannot do lpm for humidity since lcd also operates on same pin.
 
 			/*Enabling Load Power Management for the CCS811 sensor. The sensor is active only when the wake pin is low*/
-			//GPIO_PinOutClear(WAKE_PIN_PORT,WAKE_PIN); //Turning on the sensor
+			GPIO_PinOutClear(WAKE_PIN_PORT,WAKE_PIN); //Turning on the sensor
 			ppm=ppmGet();
 			sendDataToFriend(ppm,0);
 			if(ppm>maxAqi)
@@ -440,7 +437,7 @@ void handle_gecko_event(uint32_t evt_id, struct gecko_cmd_packet *evt)
 				storePersistentData(AQI_KEY,maxAqi);
 			}
 			sendDataToFriend(ppm,0);
-			//GPIO_PinOutSet(WAKE_PIN_PORT,WAKE_PIN);	//Turning off the sensor.
+			GPIO_PinOutSet(WAKE_PIN_PORT,WAKE_PIN);	//Turning off the sensor.
 #endif
 		}
 		break;
@@ -480,11 +477,6 @@ void handle_gecko_event(uint32_t evt_id, struct gecko_cmd_packet *evt)
 		LOG_INFO("Started provisioning\r\n");
 		displayPrintf(DISPLAY_ROW_CONNECTION,"Provisioning...");
 		break;
-
-	/*Was trying to check Out of band authentication functionality. */
-	/*case gecko_evt_mesh_node_display_output_oob_id:
-		LOG_INFO("");
-		break;*/
 
 
 	case gecko_evt_mesh_node_provisioned_id:
@@ -553,13 +545,6 @@ void handle_gecko_event(uint32_t evt_id, struct gecko_cmd_packet *evt)
 		// these events silently discarded
 		break;
 
-	/*case gecko_evt_mesh_generic_client_server_status_id:
-	{
-	To check the functionality of friend queue.
-	break;
-	}*/
-
-
 	case gecko_evt_gatt_server_user_write_request_id:
 		LOG_INFO("entered write_req id\n");
 		if (evt->data.evt_gatt_server_user_write_request.characteristic == gattdb_ota_control) {
@@ -579,8 +564,7 @@ void handle_gecko_event(uint32_t evt_id, struct gecko_cmd_packet *evt)
 	case gecko_evt_mesh_lpn_friendship_established_id:
 		LOG_INFO("friendship established\r\n");
 		displayPrintf(DISPLAY_ROW_CONNECTION,"LPN");
-		//gecko_cmd_hardware_set_soft_timer(2 * 32768, SensorReading, 0); // Can be added further to take sensor reading only after
-																		// friendship has been established.
+
 
 		break;
 

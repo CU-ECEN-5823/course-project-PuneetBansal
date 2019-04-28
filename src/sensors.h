@@ -45,10 +45,15 @@ void changeMode();
  */
 uint16_t ppmGet();
 
+/**
+ * @brief State machine to take humidity sensor readings
+ */
 void humidity_stateMachine();
-void aqi_stateMachine();
-void stateCheck();
+
+/**
+ * @ brief State machine to take C02 readings from CCS811 sensor.
+ */
 void aqi_stateMachine1();
-void humidityStateMachineLPM();
+
 
 
