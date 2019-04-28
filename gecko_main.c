@@ -84,6 +84,7 @@ uint8_t boot_to_dfu = 0;
 
 const gecko_configuration_t config =
 {
+		.sleep.flags = SLEEP_FLAGS_DEEP_SLEEP_ENABLE,
   .bluetooth.max_connections = MAX_CONNECTIONS,
   .bluetooth.max_advertisers = MAX_ADVERTISERS,
   .bluetooth.heap = bluetooth_stack_heap,
@@ -113,6 +114,8 @@ uint16_t element_index = 0;
 uint8_t transaction_id = 0;
 uint16_t element_index1 = 0;
 uint8_t transaction_id1 = 0;
+
+
 /*********************************************************************************************/
 
 void handle_gecko_event(uint32_t evt_id, struct gecko_cmd_packet *evt);
@@ -163,7 +166,7 @@ void lpn_init(void)
   // - Minimum friend queue length = 2
   // - Poll timeout = 5 seconds
 
-  BTSTACK_CHECK_RESPONSE(gecko_cmd_mesh_lpn_configure(2, 5 * 1000));
+  BTSTACK_CHECK_RESPONSE(gecko_cmd_mesh_lpn_configure(2, 6 * 1000));
   LOG_INFO("trying to find friend...\r\n");
   BTSTACK_CHECK_RESPONSE(gecko_cmd_mesh_lpn_establish_friendship(0));
 
@@ -226,7 +229,7 @@ void initiate_factory_reset(void)
  * @brief Sending data to friend using Level Model
  * @param data to send to friend
  */
-void sendDataToFriend(uint16_t data)
+void sendDataToFriend(uint16_t data, uint16_t delay)
 {
 	struct mesh_generic_state req;
 	uint16 resp,resp1;
@@ -255,7 +258,7 @@ void sendDataToFriend(uint16_t data)
  * @brief: Sendinf on/ off updates to friend
  * @param on_off
  */
-void sendThreshToFriend(uint8_t on_off)
+void sendThreshToFriend(uint8_t on_off,uint16_t delay)
 {
 	struct mesh_generic_request req1;
 	uint16 resp1;
@@ -284,7 +287,7 @@ void sendThreshToFriend(uint8_t on_off)
  * @param KEY to distinguish between humidity and AQI
  * @param maxVal Maximum value received from the sensors
  */
-static void storePersistentData(uint16_t KEY , uint16_t maxVal)
+void storePersistentData(uint16_t KEY , uint16_t maxVal)
 {
 	int rsp;
 	uint8_t * val_data;
@@ -299,11 +302,11 @@ static void storePersistentData(uint16_t KEY , uint16_t maxVal)
  * @return
  */
 
-static uint16_t loadPersistentData(uint16_t KEY)
+uint16_t loadPersistentData(uint16_t KEY)
 {
 	uint16_t data;
 	struct gecko_msg_flash_ps_load_rsp_t* resp;
-	BTSTACK_CHECK_RESPONSE(gecko_cmd_flash_ps_load(KEY));
+	resp=(gecko_cmd_flash_ps_load(KEY));
 	memcpy(&data,&resp->value.data,resp->value.len);
 	LOG_INFO("Persistent data is %d",data);
 	return data;
@@ -318,8 +321,9 @@ void displayPersistentData()
 	uint16_t persistentAQI, persistentHumid;
 	persistentAQI=loadPersistentData(AQI_KEY);
 	persistentHumid=loadPersistentData(HUMID_KEY);
-	displayPrintf(DISPLAY_ROW_TEMPVALUE,"HUMID %d",persistentHumid);
-	displayPrintf(6,"AQI %d",persistentAQI);
+	displayPrintf(9,"PERSISTENT DATA :");
+	displayPrintf(11,"HUMID %d",persistentHumid);
+	displayPrintf(10,"AQI %d",persistentAQI);
 	LOG_INFO("HUMID %d",persistentHumid);
 	LOG_INFO("AQI %d",persistentAQI);
 }
@@ -383,7 +387,6 @@ void handle_gecko_event(uint32_t evt_id, struct gecko_cmd_packet *evt)
 		}
 		break;
 
-
 	case gecko_evt_hardware_soft_timer_id:
 		LOG_INFO("");
 		int res5;
@@ -403,6 +406,15 @@ void handle_gecko_event(uint32_t evt_id, struct gecko_cmd_packet *evt)
 		if(evt->data.evt_hardware_soft_timer.handle==sensorReading)
 		{
 			LOG_INFO("Humidity Timeout");
+
+
+#if NON_BLOCKING_IMPLEMENTATION
+			//event = Comp0Underflow;//to remove
+			aqi_event= dataReady;
+			event=takeReading; //to add
+
+#else if
+			/************************This was the blocking working version of Humidity******************************/
 			GPIO_PinOutSet(SENSOR_ENABLE_PORT,SENSOR_ENABLE_PIN);
 			timerWaitUs(80000);
 			relHumid=humid_get();
@@ -413,21 +425,23 @@ void handle_gecko_event(uint32_t evt_id, struct gecko_cmd_packet *evt)
 				storePersistentData(HUMID_KEY,maxHumid);
 			}
 
-			sendDataToFriend(relHumid); //Sending the data to friend node via level model.
-
+			sendDataToFriend(relHumid,0); //Sending the data to friend node via level model.
+			/***********************Blocking version of AQI*************************************/
 			//GPIO_PinOutClear(SENSOR_ENABLE_PORT,SENSOR_ENABLE_PIN);//Cannot do lpm for humidity since lcd also operates on same pin.
 
 			/*Enabling Load Power Management for the CCS811 sensor. The sensor is active only when the wake pin is low*/
-			GPIO_PinOutClear(WAKE_PIN_PORT,WAKE_PIN); //Turning on the sensor
+			//GPIO_PinOutClear(WAKE_PIN_PORT,WAKE_PIN); //Turning on the sensor
 			ppm=ppmGet();
-			sendDataToFriend(ppm);
+			sendDataToFriend(ppm,0);
 			if(ppm>maxAqi)
 			{
 				LOG_INFO("Entered if of maxaqi\n");
 				maxAqi=ppm;
 				storePersistentData(AQI_KEY,maxAqi);
 			}
-			GPIO_PinOutSet(WAKE_PIN_PORT,WAKE_PIN);	//Turning off the sensor.
+			sendDataToFriend(ppm,0);
+			//GPIO_PinOutSet(WAKE_PIN_PORT,WAKE_PIN);	//Turning off the sensor.
+#endif
 		}
 		break;
 
@@ -450,7 +464,7 @@ void handle_gecko_event(uint32_t evt_id, struct gecko_cmd_packet *evt)
 			displayPrintf(DISPLAY_ROW_CONNECTION,"Provisioned");
 			displayPersistentData();
 
-			BTSTACK_CHECK_RESPONSE(gecko_cmd_hardware_set_soft_timer(2 * 32768, sensorReading, 0));
+			BTSTACK_CHECK_RESPONSE(gecko_cmd_hardware_set_soft_timer(5 * 32768, sensorReading, 0));
 		}
 		else
 		{
@@ -588,6 +602,43 @@ void handle_gecko_event(uint32_t evt_id, struct gecko_cmd_packet *evt)
 			// try again in 2 seconds
 			BTSTACK_CHECK_RESPONSE(gecko_cmd_hardware_set_soft_timer(2*32768, frienshipFailedHandle, 1));
 		}
+		break;
+
+	case gecko_evt_system_external_signal_id:
+
+		if((evt->data.evt_system_external_signal.extsignals) & TRANSFER_COMPLETE_HUMID)
+		{
+			event = transferComplete;
+			bt_event &= ~(TRANSFER_COMPLETE_HUMID);
+		}
+
+		if((evt->data.evt_system_external_signal.extsignals) & TRANSFER_COMPLETE_AQI)
+		{
+			aqi_event = aqi_transferComplete;
+			bt_event &= ~(TRANSFER_COMPLETE_AQI);
+		}
+
+		if((evt->data.evt_system_external_signal.extsignals) & TRANSFER_FAIL_HUMID)
+		{
+			event = transferError;
+			bt_event &= ~(TRANSFER_FAIL_HUMID);
+		}
+		if((evt->data.evt_system_external_signal.extsignals) & TRANSFER_FAIL_AQI)
+		{
+			aqi_event = aqi_transferError;
+			bt_event &= ~(TRANSFER_FAIL_AQI);
+		}
+		if((evt->data.evt_system_external_signal.extsignals) & DATA_READY)
+		{
+			aqi_event = dataReady;
+			bt_event &= ~(DATA_READY);
+		}
+		if((evt->data.evt_system_external_signal.extsignals) & COMP1_INTERRUPT)
+		{
+			bt_event = ~ (COMP1_INTERRUPT);
+			event=Comp1Interrupt;
+		}
+
 		break;
 
 

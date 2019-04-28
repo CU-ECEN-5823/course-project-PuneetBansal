@@ -12,16 +12,3 @@ Below is an overview of the sequence used to generate this repository:
 * Relevant emlib project files were copied from SiliconLabs\SimplicityStudio\v4\developer\sdks\gecko_sdk_suite\v2.5\platform as needed and added into the respective directories at the root.
 * The main.c file in the root folder was renamed [gecko_main.c](gecko_main.c).  Contents of the main while loop were moved into functions and the main() function was #ifdef'd out.
 * The [src](src) subfolder was added to contain code specific to the ECEN 5823 course and source files were added to support ECEN 5823 and the simplicity studio exercise assignment.
-
-## INFRASTRUCTURE OPERATIONAL EFFICIENCY IMPROVEMENT USING BLUETOOTH MESH
-
-**The following has been implemented in the project as of 20th April 2019:**
-
-* Configuration of the nodes as LPN and successfull friendship establishment 
-* Integration of CCS811 gas sensor and on board Si7021 humidity sensor. 
-* Ability to send valid sensor data using level model to the friend node.
-* Ability to send threshold values using on_off model to the friend node.
-* Addition of persistent data
-
-Project Update 2: https://docs.google.com/document/d/1Y8ieel9D1-T6Oc7vubw92KkgLBFsWoIxKFla6UmDjtw/edit
-Group Update 2: https://docs.google.com/document/d/14hHBsNqZW0f3--COB-lmO9gZ64nn1Kc1kMjcHvZI2IQ/edit

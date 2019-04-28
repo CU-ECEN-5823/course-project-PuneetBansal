@@ -169,7 +169,7 @@ void LETIMER0_IRQHandler(void)
 
 		//LOG_INFO("entered comp0 interrupt\n");
 		overflow_count++;
-		bt_event |= bt_Comp0Underflow;
+		//bt_event |= bt_Comp0Underflow;
 		displayUpdate();
 		//GPIO_PinOutToggle(LCD_PORT,LCD_PIN);
 
@@ -177,12 +177,16 @@ void LETIMER0_IRQHandler(void)
 	if(flags & LETIMER_IF_COMP1)
 	{
 		//LOG_INFO("entered comp1 interrupt\n");
-		bt_event |= bt_Comp1Interrupt;
+		//bt_event |= bt_Comp1Interrupt;
 		LETIMER_CompareSet(LETIMER0,1,0xFFFF);
 		LETIMER_IntDisable(LETIMER0,LETIMER_IFC_COMP1);
+		//bt_event= COMP1_INTERRUPT; //remove
+		//event=Comp1Interrupt;  //to add
+		prevState=powerOn_humid;//to add
+		presentState=powerOn_humid;//to add
 
 	}
-	//gecko_external_signal(bt_event);
+	//gecko_external_signal(bt_event);//remove
 	CORE_ATOMIC_IRQ_ENABLE();
 
 }

@@ -49,8 +49,10 @@ void gpioInit()
 		GPIO_ExtIntConfig(buttonPort,buttonPin,buttonPin,true,true,true);
 
 		GPIO_PinModeSet(WAKE_PIN_PORT, WAKE_PIN, gpioModePushPull, false);
+//		GPIO_PinModeSet(WAKE_PIN_PORT, WAKE_PIN, gpioModeInputPull, 1);
+//		GPIO_ExtIntConfig(WAKE_PIN_PORT,WAKE_PIN,WAKE_PIN,false,true,true);
 
-		NVIC_EnableIRQ(GPIO_EVEN_IRQn);
+//		NVIC_EnableIRQ(GPIO_EVEN_IRQn);
 
 
 }
@@ -88,21 +90,9 @@ void gpioSetDisplayExtcomin(bool high)
 void gpioCallback1(uint8_t pin)
 {
 	LOG_INFO("Entered handler");
-	int pinVal;
-	int intFlags;
-	uint32_t Flags;
-
-	pinVal=GPIO_PinInGet(buttonPort,buttonPin);
-
-	if(pinVal==1)
-	{
-		buttonDefine |= bt_fallingEdgeInt;
-	}
-
-	else
-	{
-		buttonDefine |= bt_risingEdgeInt;
-	}
-	gecko_external_signal(buttonDefine);
+	//aqi_event=dataReady;
+	bt_event= DATA_READY;
+	//gecko_external_signal(bt_event);
+	//data_ready_check=1;
 }
 

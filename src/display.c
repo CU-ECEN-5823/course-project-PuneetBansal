@@ -32,7 +32,7 @@
 /**
  * The number of rows
  */
-#define DISPLAY_ROW_NUMBER_OF_ROWS	 8
+#define DISPLAY_ROW_NUMBER_OF_ROWS	 12
 
 /**
  * A structure containing information about the data we want to display on a given

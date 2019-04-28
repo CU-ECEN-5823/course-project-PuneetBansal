@@ -13,6 +13,8 @@
  */
 #include <stdint.h>
 
+
+
 /**
  * @brief Sets the slave addresss, mode to No Hold Master Humid and writes it via i2c_write(). Then reads the raw humidity value
  * using i2c_read() and performs calculations to convert it into relative humidity.
@@ -42,4 +44,11 @@ void changeMode();
  * @return 16 bit CO2 concentration value in ppm.
  */
 uint16_t ppmGet();
+
+void humidity_stateMachine();
+void aqi_stateMachine();
+void stateCheck();
+void aqi_stateMachine1();
+void humidityStateMachineLPM();
+
 
