@@ -16,7 +16,8 @@ Below is an overview of the sequence used to generate this repository:
 
 
 
-##INFRASTRUCTURE OPERATIONAL EFFICIENCY IMPROVEMENT USING BLUETOOTH MESH
+## INFRASTRUCTURE OPERATIONAL EFFICIENCY IMPROVEMENT USING BLUETOOTH MESH
+
 The following has been implemented in the project as of 28th April 2019:
 
 * Configuration of the nodes as LPN and successfull friendship establishment
