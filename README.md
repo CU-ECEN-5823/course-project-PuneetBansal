@@ -1,4 +1,50 @@
-# ECEN 5823 Bluetooth Mesh Skeleton Project
+# INFRASTRUCTURE OPERATIONAL EFFICIENCY IMPROVEMENT USING BLUETOOTH MESH
+                         Contributors  : Puneet Bansal , Nachiket Kelkar, Tanmay Chaturvedi 
+                         Professor     : Daniel Walkes
+## OVERVIEW:
+The project aims at improving efficiency of an infrastructure by monitoring and improving 3 major factors:
+- Human Comfort (Implemented on low power node 1) : Achieved by monitoring humidity and air quality Index values.
+- Effective Space Utilization (Implemented on friend node) : Achieved by monitoring the noise level and the number of people in an area.
+- Energy efficiency ( Implemented on low power node 2): Achieved by using artificial lights based on the amount of luminous intensity.
+
+**This repository contains code for Low Power Node 1 described above , implemented by Puneet Bansal**
+
+## FEATURES:
+Features: 
+- Configuration of the nodes as LPN and successful friendship establishment
+- Integration of CCS811 gas sensor and on board Si7021 humidity sensor.
+- Ability to send valid sensor data using level model to the friend node.
+- Ability to send type of sensor data using on_off model to the friend node.
+- Use of persistent data.
+- Use of state machines for the sensor interfacing.
+
+## BLOCK DIAGRAM
+![Block Diagram](https://github.com/CU-ECEN-5823/course-project-PuneetBansal/blob/master/Images/Block%20Diagram.jpg)
+
+## HARDWARE COMPONENTS
+- Silicon Labs EFR32BG13
+- Low Power Node 1 
+  - Air Quality Index Sensor
+  - Humidity Sensor
+- Low Power Node 2
+  - Ambient Light Sensor
+  - Fire Sensor ,MQ2
+- Friend Node
+  - Motion Sensor 
+  - Sound Sensor
+
+## DOCUMENTATION :
+- **Puneet's Project Report** can be found [here](https://docs.google.com/document/d/1DEPz8JNS0c0bjY_M5uN1TsHUUEU2Ww4W-2euO1UKoJ0/edit)
+- **Puneet's Command Table** can be found [here](https://docs.google.com/spreadsheets/d/1ZElzzUw0Mz11OLMvnqzG13fEOBEhh-M-a5BcmVSSPeY/edit#gid=108495522)
+- **Group Report** can be found [here](https://docs.google.com/document/d/1RYUYPIxFx2UlZDfMEpF_KqUhhn8t8Qh3gLkbjv7GPYw/edit)
+- **Project Verification Plan** can be found [here](https://docs.google.com/spreadsheets/d/1lZt5A3WWoxcO_D8hX-FW8FySXG71lKcEpaOZikxLJfs/edit#gid=732473264)
+- **Nachiket Kelkar's contribution** can be found [here](https://github.com/CU-ECEN-5823/course-project-NachiketKelkar)
+- **Tanmay Chaturvedi's contribution** can be found [here]( https://github.com/CU-ECEN-5823/course-project-TanmayChaturvedi1 
+)
+
+
+
+### ECEN 5823 Bluetooth Mesh Skeleton Project
 
 This project contains skeleton code used for coursework in University of Colorado [ECEN 5823 IoT Embedded Firmware](https://sites.google.com/colorado.edu/ecen5823/home).
 
@@ -16,24 +62,3 @@ Below is an overview of the sequence used to generate this repository:
 
 
 
-## INFRASTRUCTURE OPERATIONAL EFFICIENCY IMPROVEMENT USING BLUETOOTH MESH
-
-The following has been implemented in the project as of 28th April 2019:
-
-* Configuration of the nodes as LPN and successfull friendship establishment
-
-* Integration of CCS811 gas sensor and on board Si7021 humidity sensor.
-
-* Ability to send valid sensor data using level model to the friend node.
-
-* Ability to send type of sensor data using on_off model to the friend node.
-
-* Addition of persistent data
-
-* Addition of state machines for the sensors
-
-* All the proposed elements are functional.
-
-* FinalReport Puneet : https://drive.google.com/drive/u/1/folders/1kCcFiodJQJ5zUSyfy8F3fvhO_kHt09sV
-
-* Final Group Update : https://drive.google.com/drive/u/1/folders/19pP2BnPFkOunKWceiNoMzz06ycwfbmVY
